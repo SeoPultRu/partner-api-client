@@ -48,9 +48,12 @@ class ApiClient
 	 */
 	public function login(string $login, string $password): void
 	{
-		$endpoint = sprintf('login?login=%s&password=%s', $login, $password);
+		$data = [
+			'login'    => $login,
+			'password' => $password,
+		];
 
-		$result = $this->send($endpoint, 'GET');
+		$result = $this->send('login', 'POST', $data);
 
 		if (!isset($result['errno']) || $result['errno'] != 'OK') {
 			throw new Exception(sprintf('Error: %s', json_encode($result)));
@@ -67,7 +70,34 @@ class ApiClient
 	 */
 	public function getAccounts(): array
 	{
-		$result = $this->send('get_click_accounts', 'GET');
+		$result = $this->send('get_click_accounts', 'POST');
+
+		if (!isset($result['errno']) || $result['errno'] != 'OK') {
+			throw new Exception(sprintf('Error: %s', json_encode($result)));
+		}
+
+		return $result['data'];
+	}
+
+	/**
+	 * Выполнить запрос к Яндекс.Директ.
+	 *
+	 * @param string $client_login Логин пользователя в Яндекс.Директ
+	 * @param string $url          Адрес сервиса для отправки запросов (регистрозависимый).
+	 * @param array  $params       Параметры запроса к серверу API Директа.
+	 *
+	 * @return mixed
+	 * @throws Exception
+	 */
+	public function queryYandexDirect($client_login, $url, array $params = [])
+	{
+		$data = [
+			'client_login' => $client_login,
+			'url'          => $url,
+			'params'       => $params,
+		];
+
+		$result = $this->send('query_yandex_direct', 'POST', $data);
 
 		if (!isset($result['errno']) || $result['errno'] != 'OK') {
 			throw new Exception(sprintf('Error: %s', json_encode($result)));
@@ -96,8 +126,9 @@ class ApiClient
 			CURLOPT_TIMEOUT        => 30,
 			CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
 			CURLOPT_CUSTOMREQUEST  => $method,
-			CURLOPT_POSTFIELDS     => json_encode($data),
+			CURLOPT_POSTFIELDS     => http_build_query($data),
 			CURLOPT_HTTPHEADER     => $this->prepareHeaders(),
+			CURLOPT_SSL_VERIFYPEER => false,
 		]);
 		$response = curl_exec($curl);
 		$err = curl_error($curl);
@@ -141,8 +172,6 @@ class ApiClient
 	private function prepareHeaders(): array
 	{
 		$headers = [];
-		$headers[] = 'Content-type: application/json;';
-		$headers[] = 'Accept: application/json';
 
 		if (!empty($this->apiToken) && !empty($this->uid)) {
 			$headers[] = "clicktoken: {$this->apiToken}";
