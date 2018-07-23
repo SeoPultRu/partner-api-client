@@ -80,33 +80,6 @@ class ApiClient
 	}
 
 	/**
-	 * Выполнить запрос к Яндекс.Директ.
-	 *
-	 * @param string $client_login Логин пользователя в Яндекс.Директ
-	 * @param string $url          Адрес сервиса для отправки запросов (регистрозависимый).
-	 * @param array  $params       Параметры запроса к серверу API Директа.
-	 *
-	 * @return mixed
-	 * @throws Exception
-	 */
-	public function queryYandexDirect($client_login, $url, array $params = [])
-	{
-		$data = [
-			'client_login' => $client_login,
-			'url'          => $url,
-			'params'       => $params,
-		];
-
-		$result = $this->send('query_yandex_direct', 'POST', $data);
-
-		if (!isset($result['errno']) || $result['errno'] != 'OK') {
-			throw new Exception(sprintf('Error: %s', json_encode($result)));
-		}
-
-		return $result['data'];
-	}
-
-	/**
 	 * Отправить запрос в API.
 	 *
 	 * @param string $endpoint Название вызываемого метода.
